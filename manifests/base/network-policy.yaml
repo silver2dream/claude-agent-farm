@@ -1,0 +1,28 @@
+# Restricts agent pods to only reach Discord API + Anthropic API + DNS.
+# NOTE: K3s uses Flannel by default, which does NOT enforce NetworkPolicy.
+# To enable enforcement, install K3s with Calico:
+#   curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy' sh -
+# Then install Calico: https://docs.tigera.io/calico/latest/getting-started/kubernetes/k3s/
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: claude-agent-egress
+  namespace: claude-agents
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # HTTPS (Discord API + Anthropic API + npm registry + GitHub)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+          protocol: TCP
+    # DNS
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP

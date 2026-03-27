@@ -1,0 +1,17 @@
+# Credentials — NEVER commit these
+config.env
+*.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# K8s
+kubeconfig
+manifests/agents/*.yaml

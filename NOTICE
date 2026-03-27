@@ -1,0 +1,19 @@
+Claude Agent Farm
+Copyright 2026 HAN LIN (https://github.com/silver2dream)
+
+This product includes software developed by HAN LIN.
+
+Project:  https://github.com/silver2dream/claude-agent-farm
+Author:   HAN LIN
+Contact:  https://github.com/silver2dream
+
+---
+
+This project uses the following third-party components:
+
+- Claude Code and Claude Code Channels by Anthropic (https://anthropic.com)
+- K3s by Rancher Labs / SUSE (https://k3s.io) — Apache License 2.0
+- Kubernetes (https://kubernetes.io) — Apache License 2.0
+
+For enterprise deployment, security hardening, and consulting services,
+visit: https://github.com/silver2dream
