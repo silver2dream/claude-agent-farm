@@ -131,6 +131,7 @@ echo -e "  ${YELLOW}then visit https://api.telegram.org/bot<TOKEN>/getUpdates${N
 echo -e "  ${YELLOW}Or use your User ID for direct messages.${NC}"
 echo ""
 ask "Telegram chat ID for this agent (leave empty for DM only)" CHAT_ID
+CHAT_ID="${CHAT_ID:-$TELEGRAM_USER_ID}"
 
 echo ""
 ask "System prompt / role for this agent (leave empty for default)" SYSTEM_PROMPT
@@ -278,7 +279,7 @@ echo ""
 echo -e "  ${GREEN}Ready! Just send a message to your bot on Telegram — it will respond.${NC}"
 echo ""
 echo -e "  ${BOLD}Add another agent (each needs its own bot from @BotFather):${NC}"
-echo -e "    ${CYAN}make -f Makefile.telegram new-agent NAME=cto BOT_TOKEN=<token> CHAT_ID=123456 PROMPT=\"You are a CTO...\"${NC}"
+echo -e "    ${CYAN}make -f Makefile.telegram new-agent NAME=cto BOT_TOKEN=<token> PROMPT=\"You are a CTO...\"${NC}"
 echo ""
 echo -e "  ${BOLD}Other commands:${NC}"
 echo "    make -f Makefile.telegram status          — see all agents"
