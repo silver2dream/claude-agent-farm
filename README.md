@@ -208,9 +208,8 @@ make new-agent NAME=ci-fix CHANNEL_ID=123456
 make apply
 
 # Telegram — each agent needs its own bot (Telegram API limitation)
-make -f Makefile.telegram add-bot NAME=ci-fix BOT_TOKEN=<token-from-botfather> USER_ID=<your-uid>
-make -f Makefile.telegram new-agent NAME=ci-fix CHAT_ID=123456
-make -f Makefile.telegram apply
+# One command: creates secret + manifest + deploys
+make -f Makefile.telegram new-agent NAME=ci-fix BOT_TOKEN=<token> CHAT_ID=123456
 ```
 
 Each agent gets:
@@ -288,7 +287,7 @@ claude-agent-farm/
 | `make -f Makefile.telegram logs AGENT=name` | Tail logs of a specific agent |
 | `make -f Makefile.telegram shell AGENT=name` | Exec into an agent pod |
 | `make -f Makefile.telegram restart AGENT=name` | Restart an agent (clears context) |
-| `make -f Makefile.telegram new-agent NAME=x CHAT_ID=y` | Generate a new agent YAML |
+| `make -f Makefile.telegram new-agent NAME=x BOT_TOKEN=t CHAT_ID=y` | Create secret + manifest + deploy |
 | `make -f Makefile.telegram destroy` | Remove everything |
 
 ---

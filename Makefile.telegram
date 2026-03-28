@@ -125,25 +125,33 @@ endif
 	@echo "♻️  Restarting $(AGENT)..."
 
 # ──────────────────────────────────────────────
-# Create a new agent
-# Each Telegram agent needs its own bot — run add-bot first
+# Create a new agent (all-in-one: secret + manifest + deploy)
+# Telegram requires one bot per agent — BOT_TOKEN is mandatory.
+# USER_ID defaults to TELEGRAM_USER_ID from config.telegram.env.
 # ──────────────────────────────────────────────
 
 new-agent:
 ifndef NAME
-	$(error Usage: make -f Makefile.telegram new-agent NAME=agent-name CHAT_ID=telegram-chat-id PROMPT="system prompt")
+	$(error Usage: make -f Makefile.telegram new-agent NAME=agent-name BOT_TOKEN=<token> CHAT_ID=telegram-chat-id [USER_ID=uid] [PROMPT="system prompt"])
+endif
+ifndef BOT_TOKEN
+	$(error BOT_TOKEN is required. Create a bot via @BotFather on Telegram and paste the token)
 endif
 ifndef CHAT_ID
 	$(error CHAT_ID is required. Use @userinfobot or @RawDataBot on Telegram to get your chat ID)
 endif
+	@echo "📱 Creating bot secret: telegram-$(NAME)..."
+	@kubectl create secret generic telegram-$(NAME) \
+		--from-literal=TELEGRAM_BOT_TOKEN=$(BOT_TOKEN) \
+		--from-literal=TELEGRAM_USER_ID=$(or $(USER_ID),$(TELEGRAM_USER_ID)) \
+		-n $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	@bash scripts/create-agent-telegram.sh $(NAME) $(CHAT_ID) $(IMAGE) "$(PROMPT)"
+	@echo "🚀 Deploying..."
+	@kubectl apply -f manifests/namespace.yaml
+	@kubectl apply -f manifests/base/
+	@kubectl apply -f manifests/agents/
 	@echo ""
-	@echo "   ⚠️  Telegram requires one bot per agent."
-	@echo "   Create a bot secret before deploying:"
-	@echo "     make -f Makefile.telegram add-bot NAME=$(NAME) BOT_TOKEN=<token> USER_ID=<uid>"
-	@echo ""
-	@echo "   Then deploy:"
-	@echo "     make -f Makefile.telegram apply"
+	@echo "✅ Agent $(NAME) deployed! Send a message to its bot on Telegram."
 
 # ──────────────────────────────────────────────
 # Cleanup
