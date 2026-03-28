@@ -1,4 +1,4 @@
-**English** | [简体中文](TELEGRAM.zh-CN.md)
+**English** | [简体中文](TELEGRAM.zh-CN.md) | [繁體中文](TELEGRAM.zh-TW.md)
 
 # Telegram Setup Guide
 

@@ -1,4 +1,4 @@
-[English](TELEGRAM.md) | **简体中文**
+[English](TELEGRAM.md) | [简体中文](TELEGRAM.zh-CN.md) | [繁體中文](TELEGRAM.zh-TW.md)
 
 # Telegram 部署指南
 

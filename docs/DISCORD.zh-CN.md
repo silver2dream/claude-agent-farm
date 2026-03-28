@@ -1,4 +1,4 @@
-[English](DISCORD.md) | **简体中文**
+[English](DISCORD.md) | [简体中文](DISCORD.zh-CN.md) | [繁體中文](DISCORD.zh-TW.md)
 
 # Discord 部署指南
 
