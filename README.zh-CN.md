@@ -37,21 +37,23 @@ Claude Agent Farm 运行在 Linux 上。根据你的情况选择：
 <details>
 <summary><b>我用的是 Windows</b> → 安装 WSL2</summary>
 
-以**管理员身份**打开 **PowerShell**，运行：
+1. 按 `Win` 键，输入 **PowerShell**，右键 → **以管理员身份运行**
+2. 输入以下命令：
+   ```powershell
+   wsl --install -d Ubuntu
+   ```
+3. 等它跑完，然后**重启电脑**
+4. 重启后，会自动弹出一个黑色窗口，标题是 **Ubuntu**。如果没有弹出，点开始菜单搜索 **Ubuntu**，点击打开
+5. 它会让你创建**用户名**和**密码** — 输入就行（输密码时看不到字符，这是正常的）。记住它们
+6. 你应该会看到类似 `yourname@DESKTOP:~$` 的提示符 — 这说明你已经进入 Linux 了
 
-```powershell
-wsl --install -d Ubuntu
+**以后每次要用 Claude Agent Farm**，打开任意终端（PowerShell、命令提示符或 Windows Terminal），输入：
+
 ```
-
-按提示重启电脑。重启后，从开始菜单打开 **Ubuntu**，它会要求你创建用户名和密码 — 记住它们。
-
-以后每次要用 Claude Agent Farm，打开终端输入：
-
-```powershell
 wsl
 ```
 
-就会进入 Linux shell。后面所有步骤都在这里执行。
+看到 `yourname@DESKTOP:~$` 提示符就说明进来了。后面所有步骤都在这里执行。
 
 </details>
 
