@@ -26,40 +26,136 @@ Think of it as a team of AI coworkers, each with a specialty, all reachable from
 
 ---
 
-## Quick Start
+## Quick Start (from zero)
 
-### Prerequisites
+Follow these steps in order. Everything is copy-paste — no prior experience required.
 
-| Requirement | How to get it |
-|---|---|
-| Linux machine (VPS, home server, or WSL2) | Ubuntu 22.04+, 2 CPU, 4GB RAM minimum |
-| Claude Pro or Max subscription | [claude.ai/pricing](https://claude.ai/pricing) |
-| Claude Code CLI (authenticated) | `npm install -g @anthropic-ai/claude-code` then `claude login` |
-| Discord or Telegram account | [discord.com](https://discord.com) / [telegram.org](https://telegram.org) |
+### Step 0: Get a Linux environment
 
-### Discord
+Claude Agent Farm runs on Linux. Pick the option that matches your situation:
 
-```bash
-git clone https://github.com/silver2dream/claude-agent-farm.git
-cd claude-agent-farm
-bash setup.sh
+<details>
+<summary><b>I'm on Windows</b> → Install WSL2</summary>
+
+Open **PowerShell as Administrator** and run:
+
+```powershell
+wsl --install -d Ubuntu
 ```
 
-> Full guide: [docs/DISCORD.md](docs/DISCORD.md) — bot creation, pairing, commands, adding agents
+Restart your computer when prompted. After reboot, open **Ubuntu** from the Start menu. It will ask you to create a username and password — remember these.
 
-### Telegram
+All remaining steps should be run **inside the Ubuntu terminal**.
+
+</details>
+
+<details>
+<summary><b>I'm on macOS</b> → Use a cloud VPS</summary>
+
+K3s doesn't run natively on macOS. Your options:
+
+- **Cloud VPS** (recommended): Get an Ubuntu 22.04 server from [DigitalOcean](https://www.digitalocean.com/), [Vultr](https://www.vultr.com/), or [Hetzner](https://www.hetzner.com/) (from ~$5/mo). SSH into it.
+- **Linux VM**: Use [OrbStack](https://orbstack.dev/) or UTM to run an Ubuntu VM locally.
+
+</details>
+
+<details>
+<summary><b>I'm already on Linux</b></summary>
+
+You're good. Make sure you're on Ubuntu 22.04+ (or Debian-based) with at least 2 CPU cores and 4GB RAM.
+
+</details>
+
+### Step 1: Install Node.js
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+Verify:
+```bash
+node --version   # should show v22.x.x
+```
+
+### Step 2: Install Claude Code and log in
+
+```bash
+sudo npm install -g @anthropic-ai/claude-code
+claude login
+```
+
+> **Don't have a Claude account?** Go to [claude.ai](https://claude.ai) and sign up. You need a **Pro** ($20/mo) or **Max** ($100/mo) subscription. Free tier won't work.
+
+`claude login` will open a browser link. Click it, log in, and authorize. If you're on a headless server (no browser), it will show a URL — copy it to your local browser, authorize, then paste the code back.
+
+Verify:
+```bash
+claude --version   # should show a version number
+```
+
+### Step 3: Install Docker
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+```
+
+**Important:** Log out and log back in (or run `newgrp docker`) for the group change to take effect.
+
+Verify:
+```bash
+docker run hello-world   # should show "Hello from Docker!"
+```
+
+### Step 4: Create your bot
+
+Choose your platform and create a bot:
+
+<details>
+<summary><b>Discord</b></summary>
+
+1. Go to [discord.com/developers/applications](https://discord.com/developers/applications) → click **New Application** → name it anything
+2. Go to the **Bot** tab on the left → click **Reset Token** → copy the token (save it somewhere safe)
+3. Scroll down → turn on **Message Content Intent**
+4. Go to **OAuth2 → URL Generator** on the left → check `bot` under scopes → check these permissions: Send Messages, Embed Links, Add Reactions, Read Message History
+5. Copy the **Generated URL** at the bottom → open it in your browser → add the bot to your Discord server
+
+You'll also need:
+- **Server ID**: Right-click your server name in Discord → Copy Server ID (enable Developer Mode in Discord Settings → Advanced first)
+- **Channel ID**: Right-click a text channel → Copy Channel ID
+
+</details>
+
+<details>
+<summary><b>Telegram</b></summary>
+
+1. Open Telegram and search for **@BotFather**
+2. Send `/newbot`
+3. Follow the prompts — give your bot a name and username
+4. BotFather will reply with a **bot token** — copy it (save it somewhere safe)
+
+You'll also need:
+- **Your User ID**: Send any message to **@userinfobot** on Telegram — it will reply with your ID
+
+</details>
+
+### Step 5: Run the setup
 
 ```bash
 git clone https://github.com/silver2dream/claude-agent-farm.git
 cd claude-agent-farm
+
+# Discord
+bash setup.sh
+
+# OR Telegram
 bash setup-telegram.sh
 ```
 
-> Full guide: [docs/TELEGRAM.md](docs/TELEGRAM.md) — bot creation, pairing, commands, adding agents
+The script will ask you for the bot token and IDs you saved in Step 4. Paste them in when prompted.
 
-### Both platforms at once
-
-Discord and Telegram agents coexist in the same K3s cluster. Run both setup scripts — they share the namespace and Claude credentials.
+**That's it.** When the script finishes, send a message to your bot — it will respond.
 
 ---
 
@@ -73,6 +169,10 @@ make apply
 # Telegram — each agent needs its own bot (@BotFather, free & instant)
 make -f Makefile.telegram new-agent NAME=ci-fix BOT_TOKEN=<token>
 ```
+
+> **Discord vs Telegram:** Discord agents share one bot token (the bot joins multiple channels). Telegram agents each need their own bot — Telegram only allows one `getUpdates` consumer per token. Creating extra bots via @BotFather is free and instant.
+
+> Full platform guides: [Discord](docs/DISCORD.md) | [Telegram](docs/TELEGRAM.md)
 
 ---
 
@@ -175,13 +275,13 @@ Same Deployments, same PVCs, same NetworkPolicies, same Secrets. Add ArgoCD for 
 ## FAQ
 
 **Can I use both Discord and Telegram?**
-Yes. They coexist in the same K3s cluster. Use `make` for Discord and `make -f Makefile.telegram` for Telegram.
+Yes. They coexist in the same K3s cluster. Run both setup scripts.
 
 **Why does Telegram need one bot per agent?**
 Telegram only allows one `getUpdates` consumer per bot token. Discord doesn't have this limitation. Creating extra Telegram bots via @BotFather is free and has no limit.
 
 **Does this work on macOS / Windows?**
-K3s is Linux-only. On macOS/Windows, use a Linux VM or WSL2.
+K3s is Linux-only. On Windows, use WSL2 (see Step 0). On macOS, use a cloud VPS or Linux VM.
 
 **Can I run this on a Raspberry Pi?**
 K3s supports ARM64. A Raspberry Pi 4 (4GB+) can comfortably host 1–2 agents.

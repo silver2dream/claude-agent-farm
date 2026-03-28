@@ -4,7 +4,7 @@
 
 **在你自己的机器上运行常驻 Claude Code AI 智能体，通过 Discord 或 Telegram 与它们对话。基于 K3s 构建。**
 
-一个 Bot，多个智能体。每个智能体拥有独立角色、独立聊天频道、独立运行环境。
+一个 Bot，多个智能��。每个智能体拥有独立角色、独立��天频道、独立运行环境。
 文件和凭证留在你的机器上，AI 推理走 Anthropic 服务器，对话走 Discord 或 Telegram — 没有第三方代码接触你的数据。
 
 <!-- TODO: 添加演示 GIF -->
@@ -14,10 +14,10 @@
 
 ## 这是什么？
 
-Claude Agent Farm 使用 [K3s](https://k3s.io) 将 [Claude Code Channels](https://code.claude.com/docs/en/channels)（Anthropic 官方聊天插件）部署到你机器上的轻量级 Kubernetes Pod 中。每个智能体：
+Claude Agent Farm 使用 [K3s](https://k3s.io) 将 [Claude Code Channels](https://code.claude.com/docs/en/channels)（Anthropic ���方聊天插件）部署到你机器上的轻量级 Kubernetes Pod 中。每个智能体：
 
 - 运行在**隔离的 Pod** 中（独立文件系统、网络、资源）
-- 连接到**专属的 Discord 频道或 Telegram 聊天**（一个频道 = 一个智能体）
+- 连接到**专属的 Discord 频��或 Telegram 聊天**（一个频道 = 一个智能体）
 - 崩溃后**自动重启**（K8s 存活探针）
 - 数据留在**你的机器上**（文件和凭证在本地；仅 Anthropic API 和聊天平台 API 是外部连接）
 - 空闲时**零 Anthropic 配额消耗**
@@ -26,44 +26,140 @@ Claude Agent Farm 使用 [K3s](https://k3s.io) 将 [Claude Code Channels](https:
 
 ---
 
-## 快速开始
+## 从零开始（Quick Start）
 
-### 前置要求
+按顺序一步步来，所有命令都可以直接复制粘贴。
 
-| 要求 | 获取方式 |
-|---|---|
-| Linux 机器（VPS、家用服务器或 WSL2） | Ubuntu 22.04+，最低 2 核 CPU、4GB 内存 |
-| Claude Pro 或 Max 订阅 | [claude.ai/pricing](https://claude.ai/pricing) |
-| Claude Code CLI（已认证） | `npm install -g @anthropic-ai/claude-code` 然后 `claude login` |
-| Discord 或 Telegram 账号 | [discord.com](https://discord.com) / [telegram.org](https://telegram.org) |
+### 第 0 步：准备 Linux 环境
 
-### Discord
+Claude Agent Farm 运行在 Linux 上。根据你的情况选择：
 
-```bash
-git clone https://github.com/silver2dream/claude-agent-farm.git
-cd claude-agent-farm
-bash setup.sh
+<details>
+<summary><b>我用的是 Windows</b> → 安装 WSL2</summary>
+
+以**管理员身份**打开 **PowerShell**，运行：
+
+```powershell
+wsl --install -d Ubuntu
 ```
 
-> 完整指南：[docs/DISCORD.zh-CN.md](docs/DISCORD.zh-CN.md) — Bot 创建、配对、命令、添加智能体
+按提示重启电脑。重启后，从开始菜单打开 **Ubuntu**，它会要求你创建用户名和密码 — 记住它们。
 
-### Telegram
+后面所有步骤都在 **Ubuntu 终端**里执行。
+
+</details>
+
+<details>
+<summary><b>我用的是 macOS</b> → 使用云服务器</summary>
+
+K3s 不能直接在 macOS 上运行。你可以：
+
+- **云服务器**（推荐）：在 [DigitalOcean](https://www.digitalocean.com/)、[Vultr](https://www.vultr.com/) 或 [Hetzner](https://www.hetzner.com/) 购买一台 Ubuntu 22.04 服务器（约 $5/月起）。通过 SSH 连接。
+- **本地虚拟机**：使用 [OrbStack](https://orbstack.dev/) 或 UTM 运行 Ubuntu 虚拟机。
+
+</details>
+
+<details>
+<summary><b>我已经在 Linux 上了</b></summary>
+
+直接开始。确保你的系统是 Ubuntu 22.04+（或基于 Debian），至少 2 核 CPU、4GB 内存。
+
+</details>
+
+### 第 1 步：安装 Node.js
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+验证：
+```bash
+node --version   # 应该显示 v22.x.x
+```
+
+### 第 2 步：安装 Claude Code 并登录
+
+```bash
+sudo npm install -g @anthropic-ai/claude-code
+claude login
+```
+
+> **还没有 Claude 账号？** 前往 [claude.ai](https://claude.ai) 注册。你需要 **Pro**（$20/月）或 **Max**（$100/月）订阅，免费版无法使用。
+
+`claude login` 会打开一个浏览器链接。点击链接，登录并授权。如果你在没有浏览器的服务器上，它会显示一个 URL — 复制到你本地浏览器打开，授权后把验证码粘贴回来。
+
+验证：
+```bash
+claude --version   # 应该显示版本号
+```
+
+### 第 3 步：安装 Docker
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+```
+
+**重要：** 需要注销并重新登录（或运行 `newgrp docker`）才能让权限生效。
+
+验证：
+```bash
+docker run hello-world   # 应该显示 "Hello from Docker!"
+```
+
+### 第 4 步：创建你的 Bot
+
+选择你的平台，创建一个 Bot：
+
+<details>
+<summary><b>Discord</b></summary>
+
+1. 打开 [discord.com/developers/applications](https://discord.com/developers/applications) → 点击 **New Application** → 随便起个名字
+2. 左侧点 **Bot** 标签 → 点 **Reset Token** → 复制 token（保存好）
+3. 往下滚 → 打开 **Message Content Intent**
+4. 左侧点 **OAuth2 → URL Generator** → scopes 勾选 `bot` → 权限勾选：Send Messages、Embed Links、Add Reactions、Read Message History
+5. 复制底部的 **Generated URL** → 浏览器打开 → 把 Bot 添加到你的 Discord 服务器
+
+你还需要：
+- **服务器 ID**：右键点击 Discord 服务器名称 → 复制服务器 ID（需要先在 Discord 设置 → 高级 中启用开发者模式）
+- **频道 ID**：右键点击一个文字频道 → 复制频道 ID
+
+</details>
+
+<details>
+<summary><b>Telegram</b></summary>
+
+1. 打开 Telegram，搜索 **@BotFather**
+2. 发送 `/newbot`
+3. 按提示给你的 Bot 起名字和用户名
+4. BotFather 会回复一个 **Bot token** — 复制它（保存好）
+
+你还需要：
+- **你的 User ID**：在 Telegram 上给 **@userinfobot** 发任意消息 — 它会回复你的 ID
+
+</details>
+
+### 第 5 步：运行安装脚本
 
 ```bash
 git clone https://github.com/silver2dream/claude-agent-farm.git
 cd claude-agent-farm
+
+# Discord
+bash setup.sh
+
+# 或者 Telegram
 bash setup-telegram.sh
 ```
 
-> 完整指南：[docs/TELEGRAM.zh-CN.md](docs/TELEGRAM.zh-CN.md) — Bot 创建、配对、命令、添加智能体
+脚本会问你第 4 步保存的 Bot token 和 ID，粘贴进去就行。
 
-### 同时使用两个平台
-
-Discord 和 Telegram 智能体共存于同一个 K3s 集群。分别运行两个安装脚本即可 — 它们共享命名空间和 Claude 凭证。
+**搞定了。** 脚本跑完后，给你的 Bot 发条消息 — 它会回复。
 
 ---
 
-## 添加智能体
+## 添加智��体
 
 ```bash
 # Discord — 所有智能体共享一个 Bot
@@ -74,16 +170,20 @@ make apply
 make -f Makefile.telegram new-agent NAME=ci-fix BOT_TOKEN=<token>
 ```
 
+> **Discord vs Telegram：** Discord 智能体共享一个 Bot token（Bot 加入多个频道）。Telegram 智能体各需独立 Bot — Telegram 每个 token 只允许一个 `getUpdates` 消费者。通过 @BotFather 创建额外 Bot 免费且即时。
+
+> 各平台完整指南：[Discord](docs/DISCORD.zh-CN.md) | [Telegram](docs/TELEGRAM.zh-CN.md)
+
 ---
 
 ## 工作原理
 
 ```
 Discord #频道     ◄──► Claude Code Pod（在 K3s 中）
-Telegram 聊天     ◄──► Claude Code Pod（在 K3s 中）
+Telegram 聊天     ◄──► Claude Code Pod（�� K3s 中）
                          │
                          ├── 通过官方插件读取聊天平台事件
-                         ├── 拥有完整文件系统 + git 访问权限
+                         ├── ��有完整文件系统 + git 访��权限
                          ├── 通过同一频道/聊天回复
                          └── 在资源受限的隔离 Pod 中运行
 ```
@@ -104,10 +204,10 @@ claude-agent-farm/
 ├── config.example[.telegram].env    # 配置模板
 ├── docker/
 │   ├── Dockerfile[.telegram]        # 各平台容器镜像
-│   └── entrypoint[-telegram].sh     # 凭证恢复 + 启动
+│   └── entrypoint[-telegram].sh     # 凭证恢�� + 启动
 ├── manifests/
 │   ├── namespace.yaml               # claude-agents 命名空间
-│   ├── base/                        # 网络策略
+│   ├��─ base/                        # 网络策略
 │   └── agents/                      # 生成的智能体 YAML
 ├── scripts/                         # 智能体 YAML 生成器
 ├── examples/                        # 各平台智能体模板
@@ -126,7 +226,7 @@ claude-agent-farm/
 | 智能体数量 | CPU | 内存 | 建议机器 |
 |---|---|---|---|
 | 1–2 个 | 2 核 | 4 GB | $20–30/月 VPS 或旧笔记本 |
-| 3–5 个 | 4 核 | 8 GB | $40–60/月 VPS |
+| 3���5 个 | 4 核 | 8 GB | $40–60/月 VPS |
 | 6–10 个 | 8 核 | 16 GB | $80–100/月 独立服务器 |
 
 K3s 控制面额外占用约 500MB 内存。
@@ -139,7 +239,7 @@ K3s 控制面额外占用约 500MB 内存。
 
 | 方案 | 价格 | 约每 5 小时提示数 | 适合 |
 |---|---|---|---|
-| Pro | $20/月 | ~45 | 1–2 个轻量智能体 |
+| Pro | $20/�� | ~45 | 1–2 个轻量智能体 |
 | Max 5x | $100/月 | ~200 | 2–3 个中等负载智能体 |
 | Max 20x | $200/月 | ~800 | 3+ 个并行智能体 |
 
@@ -152,9 +252,9 @@ K3s 控制面额外占用约 500MB 内存。
 即使在单台机器上，K3s 也能提供真正的隔离：
 
 - **Pod 隔离** — 每个智能体拥有独立的文件系统命名空间；一个智能体无法访问另一个的数据
-- **K8s Secrets** — Bot token 和 Claude 凭证加密存储，而非明文文件
+- **K8s Secrets** — Bot token 和 Claude 凭证加密存储，而非明文文���
 - **NetworkPolicy** — 每个智能体的出站流量仅限聊天平台 API + Anthropic API + DNS
-- **无第三方代码** — 仅使用 Anthropic 官方插件 + K8s 原生组件
+- **无第���方代码** — 仅使用 Anthropic 官方插件 + K8s 原生组件
 
 如需高级加固（RBAC、KMS 静态加密、审计日志），请参阅企业版文档。
 
@@ -175,13 +275,13 @@ K3s（单机） → EKS / GKE / AKS（云端）
 ## 常见问题
 
 **可以同时使用 Discord 和 Telegram 吗？**
-可以。它们共存于同一个 K3s 集群。Discord 用 `make`，Telegram 用 `make -f Makefile.telegram`。
+可以。它们共存于同一个 K3s 集群。分别运行两个安装脚本即可。
 
 **为什么 Telegram 每个智能体需要一个 Bot？**
 Telegram 每个 Bot token 只允许一个 `getUpdates` 消费者。Discord 没有这个限制。通过 @BotFather 创建额外的 Telegram Bot 是免费的且没有数量限制。
 
 **支持 macOS / Windows 吗？**
-K3s 仅支持 Linux。在 macOS/Windows 上请使用 Linux 虚拟机或 WSL2。
+K3s 仅支持 Linux。Windows 用 WSL2（见第 0 步），macOS 用云服务器或 Linux 虚拟机。
 
 **可以在树莓派上运行吗？**
 K3s 支持 ARM64。树莓派 4（4GB+）可以轻松运行 1–2 个智能体。
