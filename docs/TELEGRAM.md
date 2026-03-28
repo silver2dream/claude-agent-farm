@@ -1,3 +1,5 @@
+**English** | [简体中文](TELEGRAM.zh-CN.md)
+
 # Telegram Setup Guide
 
 ## Create a Telegram Bot

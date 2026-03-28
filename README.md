@@ -1,3 +1,5 @@
+**English** | [简体中文](README.zh-CN.md)
+
 # 🪐 Claude Agent Farm
 
 **Run always-on Claude Code AI agents on your own machine. Talk to them from Discord or Telegram. Powered by K3s.**

@@ -1,3 +1,5 @@
+**English** | [简体中文](DISCORD.zh-CN.md)
+
 # Discord Setup Guide
 
 ## Create a Discord Bot
