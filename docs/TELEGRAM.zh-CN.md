@@ -56,27 +56,6 @@ make -f Makefile.telegram setup
 
 ---
 
-## 首次配对
-
-> **使用 `bash setup-telegram.sh` 安装的？** 配对已自动完成 — entrypoint 会用你的 User ID 和 Chat ID 预配置访问控制。可以跳过本节。
-
-如果你是手动安装（未使用安装脚本），每个智能体需要配对一次：
-
-```bash
-# 进入运行中的智能体 Pod
-make -f Makefile.telegram shell AGENT=my-first-agent
-
-# 在 Pod 中：在 Telegram 上给你的 Bot 发消息，获取配对码，然后：
-/telegram:access pair <配对码>
-/telegram:access policy allowlist
-/telegram:access chat add <聊天ID>
-
-# 退出 Pod
-exit
-```
-
----
-
 ## 添加更多智能体
 
 每个 Telegram 智能体需要独立的 Bot（先在 @BotFather 创建一个）。一条命令搞定所有事情：

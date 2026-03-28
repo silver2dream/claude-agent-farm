@@ -54,27 +54,6 @@ make setup
 
 ---
 
-## First-time Pairing
-
-> **Using `bash setup.sh`?** Pairing is handled automatically — the entrypoint pre-configures access control with your User ID and Channel ID. You can skip this section.
-
-If you set up manually without the setup script, each agent needs to be paired once:
-
-```bash
-# Exec into the running agent pod
-make shell AGENT=my-first-agent
-
-# In the pod: DM your bot on Discord, get a pairing code, then:
-/discord:access pair <pairing-code>
-/discord:access policy allowlist
-/discord:access channel add <channel-id>
-
-# Exit the pod
-exit
-```
-
----
-
 ## Add More Agents
 
 All Discord agents share one bot token — you just point each to a different channel.

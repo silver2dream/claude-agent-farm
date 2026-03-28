@@ -56,27 +56,6 @@ make -f Makefile.telegram setup
 
 ---
 
-## First-time Pairing
-
-> **Using `bash setup-telegram.sh`?** Pairing is handled automatically — the entrypoint pre-configures access control with your User ID and Chat ID. You can skip this section.
-
-If you set up manually without the setup script, each agent needs to be paired once:
-
-```bash
-# Exec into the running agent pod
-make -f Makefile.telegram shell AGENT=my-first-agent
-
-# In the pod: send a message to your bot on Telegram, get a pairing code, then:
-/telegram:access pair <pairing-code>
-/telegram:access policy allowlist
-/telegram:access chat add <chat-id>
-
-# Exit the pod
-exit
-```
-
----
-
 ## Add More Agents
 
 Each Telegram agent needs its own bot (create one via @BotFather first). One command handles everything:

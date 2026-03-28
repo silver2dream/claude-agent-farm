@@ -54,27 +54,6 @@ make setup
 
 ---
 
-## 首次配对
-
-> **使用 `bash setup.sh` 安装的？** 配对已自动完成 — entrypoint 会用你的 User ID 和 Channel ID 预配置访问控制。可以跳过本节。
-
-如果你是手动安装（未使用安装脚本），每个智能体需要配对一次：
-
-```bash
-# 进入运行中的智能体 Pod
-make shell AGENT=my-first-agent
-
-# 在 Pod 中：在 Discord 上私信你的 Bot，获取配对码，然后：
-/discord:access pair <配对码>
-/discord:access policy allowlist
-/discord:access channel add <频道ID>
-
-# 退出 Pod
-exit
-```
-
----
-
 ## 添加更多智能体
 
 所有 Discord 智能体共享一个 Bot token — 只需将每个智能体指向不同的频道。
