@@ -1,0 +1,165 @@
+.PHONY: setup deploy apply status logs shell restart new-agent destroy build secrets add-bot
+
+include config.telegram.env
+export
+
+NAMESPACE := claude-agents
+IMAGE := $(IMAGE_NAME):$(IMAGE_TAG)
+
+# ──────────────────────────────────────────────
+# First-time setup
+# ──────────────────────────────────────────────
+
+setup: build secrets deploy
+	@echo ""
+	@echo "✅ Claude Agent Farm (Telegram) is running!"
+	@echo "   Send a message to your bot on Telegram — it will respond."
+	@echo ""
+
+# ──────────────────────────────────────────────
+# Build container image
+# ──────────────────────────────────────────────
+
+build:
+	@echo "🔨 Building Telegram container image..."
+	docker build -t $(IMAGE) -f docker/Dockerfile.telegram docker/
+	@echo "📦 Importing into K3s..."
+	sudo k3s ctr images rm docker.io/library/$(IMAGE) 2>/dev/null || true
+	docker save $(IMAGE) | sudo k3s ctr images import -
+	@echo "✅ Image ready: $(IMAGE)"
+
+# ──────────────────────────────────────────────
+# Create K8s secrets
+# ──────────────────────────────────────────────
+
+secrets:
+	@echo "🔐 Creating namespace and secrets..."
+	kubectl apply -f manifests/namespace.yaml
+	@echo "📱 Creating per-agent bot secret: telegram-$(AGENT_NAME)..."
+	kubectl create secret generic telegram-$(AGENT_NAME) \
+		--from-literal=TELEGRAM_BOT_TOKEN=$(TELEGRAM_BOT_TOKEN) \
+		--from-literal=TELEGRAM_USER_ID=$(TELEGRAM_USER_ID) \
+		-n $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
+	@if [ -d "$(CLAUDE_CONFIG_DIR)" ]; then \
+		echo "📋 Importing Claude credentials from $(CLAUDE_CONFIG_DIR)..."; \
+		FROM_FILES=""; \
+		for f in credentials.json .credentials.json settings.json statsig.json; do \
+			if [ -f "$(CLAUDE_CONFIG_DIR)/$$f" ]; then \
+				FROM_FILES="$$FROM_FILES --from-file=$$f=$(CLAUDE_CONFIG_DIR)/$$f"; \
+			fi; \
+		done; \
+		if [ -f "$$HOME/.claude.json" ]; then \
+			FROM_FILES="$$FROM_FILES --from-file=claude.json=$$HOME/.claude.json"; \
+		fi; \
+		if [ -n "$$FROM_FILES" ]; then \
+			eval kubectl create secret generic claude-config \
+				$$FROM_FILES \
+				-n $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -; \
+		else \
+			echo "⚠️  No credential files found. Run 'claude login' first."; \
+		fi; \
+	else \
+		echo "⚠️  Claude config dir not found at $(CLAUDE_CONFIG_DIR). Set CLAUDE_CONFIG_DIR in config.telegram.env"; \
+	fi
+	@echo "✅ Secrets created"
+
+# ──────────────────────────────────────────────
+# Add bot secret for a new agent
+# Telegram limitation: each agent needs its own bot (one getUpdates consumer per token)
+# ──────────────────────────────────────────────
+
+add-bot:
+ifndef NAME
+	$(error Usage: make -f Makefile.telegram add-bot NAME=agent-name BOT_TOKEN=telegram-bot-token USER_ID=your-user-id)
+endif
+ifndef BOT_TOKEN
+	$(error BOT_TOKEN is required. Get it from @BotFather on Telegram)
+endif
+ifndef USER_ID
+	$(error USER_ID is required. Get it from @userinfobot on Telegram)
+endif
+	@echo "📱 Creating bot secret: telegram-$(NAME)..."
+	kubectl create secret generic telegram-$(NAME) \
+		--from-literal=TELEGRAM_BOT_TOKEN=$(BOT_TOKEN) \
+		--from-literal=TELEGRAM_USER_ID=$(USER_ID) \
+		-n $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
+	@echo "✅ Secret telegram-$(NAME) created"
+
+# ──────────────────────────────────────────────
+# Deploy / apply manifests
+# ──────────────────────────────────────────────
+
+deploy:
+	@echo "🚀 Deploying..."
+	kubectl apply -f manifests/namespace.yaml
+	kubectl apply -f manifests/base/
+	kubectl apply -f manifests/agents/
+	@echo "✅ Deployed. Run 'make -f Makefile.telegram status' to check."
+
+apply: deploy
+
+# ──────────────────────────────────────────────
+# Operations
+# ──────────────────────────────────────────────
+
+status:
+	@kubectl get pods -n $(NAMESPACE) -o wide
+
+logs:
+ifndef AGENT
+	$(error Usage: make -f Makefile.telegram logs AGENT=agent-name)
+endif
+	kubectl logs -f deploy/$(AGENT) -n $(NAMESPACE)
+
+shell:
+ifndef AGENT
+	$(error Usage: make -f Makefile.telegram shell AGENT=agent-name)
+endif
+	kubectl exec -it deploy/$(AGENT) -n $(NAMESPACE) -- /bin/bash
+
+restart:
+ifndef AGENT
+	$(error Usage: make -f Makefile.telegram restart AGENT=agent-name)
+endif
+	kubectl rollout restart deploy/$(AGENT) -n $(NAMESPACE)
+	@echo "♻️  Restarting $(AGENT)..."
+
+# ──────────────────────────────────────────────
+# Create a new agent (all-in-one: secret + manifest + deploy)
+# Telegram requires one bot per agent — BOT_TOKEN is mandatory.
+# USER_ID defaults to TELEGRAM_USER_ID from config.telegram.env.
+# CHAT_ID is optional — omit for DM-only mode (uses USER_ID as chat).
+# ──────────────────────────────────────────────
+
+new-agent:
+ifndef NAME
+	$(error Usage: make -f Makefile.telegram new-agent NAME=agent-name BOT_TOKEN=<token> [CHAT_ID=id] [PROMPT="system prompt"])
+endif
+ifndef BOT_TOKEN
+	$(error BOT_TOKEN is required. Create a bot via @BotFather on Telegram and paste the token)
+endif
+	@echo "📱 Creating bot secret: telegram-$(NAME)..."
+	@kubectl create secret generic telegram-$(NAME) \
+		--from-literal=TELEGRAM_BOT_TOKEN=$(BOT_TOKEN) \
+		--from-literal=TELEGRAM_USER_ID=$(or $(USER_ID),$(TELEGRAM_USER_ID)) \
+		-n $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
+	@bash scripts/create-agent-telegram.sh $(NAME) "$(or $(CHAT_ID),$(or $(USER_ID),$(TELEGRAM_USER_ID)))" $(IMAGE) "$(PROMPT)"
+	@echo "🚀 Deploying..."
+	@kubectl apply -f manifests/namespace.yaml
+	@kubectl apply -f manifests/base/
+	@kubectl apply -f manifests/agents/
+	@echo ""
+ifdef CHAT_ID
+	@echo "✅ Agent $(NAME) deployed! Send a message in chat $(CHAT_ID)."
+else
+	@echo "✅ Agent $(NAME) deployed! DM the bot directly on Telegram."
+endif
+
+# ──────────────────────────────────────────────
+# Cleanup
+# ──────────────────────────────────────────────
+
+destroy:
+	@echo "🗑️  Removing all Claude Agent Farm resources..."
+	kubectl delete namespace $(NAMESPACE) --ignore-not-found
+	@echo "✅ Cleaned up."

@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: __AGENT_NAME__-claude-data
+  namespace: claude-agents
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __AGENT_NAME__
+  namespace: claude-agents
+  labels:
+    app.kubernetes.io/part-of: claude-agent-farm
+    platform: telegram
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: __AGENT_NAME__
+  template:
+    metadata:
+      labels:
+        app: __AGENT_NAME__
+        platform: telegram
+    spec:
+      containers:
+        - name: claude-code
+          image: __IMAGE__
+          imagePullPolicy: Never
+          tty: true
+          stdin: true
+          env:
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-__AGENT_NAME__
+                  key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-__AGENT_NAME__
+                  key: TELEGRAM_USER_ID
+            - name: TELEGRAM_CHAT_ID
+              value: "__CHAT_ID__"
+            - name: AGENT_SYSTEM_PROMPT
+              value: "__SYSTEM_PROMPT__"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: claude-data
+              mountPath: /home/agent/.claude
+            - name: claude-credentials
+              mountPath: /secrets/claude-config
+              readOnly: true
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "claude"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: claude-data
+          persistentVolumeClaim:
+            claimName: __AGENT_NAME__-claude-data
+        - name: claude-credentials
+          secret:
+            secretName: claude-config
+            optional: true

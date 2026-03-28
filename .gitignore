@@ -1,5 +1,6 @@
 # Credentials — NEVER commit these
 config.env
+config.telegram.env
 *.tar.gz
 
 # OS

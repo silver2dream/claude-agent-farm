@@ -1,0 +1,40 @@
+# Restricts Telegram agent pods to only reach Telegram API + Anthropic API + DNS.
+# Applies only to pods with label platform=telegram.
+# NOTE: K3s uses Flannel by default, which does NOT enforce NetworkPolicy.
+# To enable enforcement, install K3s with Calico:
+#   curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy' sh -
+# Then install Calico: https://docs.tigera.io/calico/latest/getting-started/kubernetes/k3s/
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: claude-agent-telegram-egress
+  namespace: claude-agents
+spec:
+  podSelector:
+    matchLabels:
+      platform: telegram
+  policyTypes:
+    - Egress
+  egress:
+    # HTTPS (Telegram API + Anthropic API + npm registry + GitHub)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+          protocol: TCP
+    # HTTP (Telegram Bot API also uses 80 and 8443)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 80
+          protocol: TCP
+        - port: 8443
+          protocol: TCP
+    # DNS
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
