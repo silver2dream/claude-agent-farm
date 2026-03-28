@@ -50,12 +50,17 @@ wsl --install -d Ubuntu
 </details>
 
 <details>
-<summary><b>我用的是 macOS</b> → 使用云服务器</summary>
+<summary><b>我用的是 macOS</b> → 安装 OrbStack</summary>
 
-K3s 不能直接在 macOS 上运行。你可以：
+K3s 不能直接在 macOS 上运行，但 [OrbStack](https://orbstack.dev/) 可以零配置提供 Linux 环境：
 
-- **云服务器**（推荐）：在 [DigitalOcean](https://www.digitalocean.com/)、[Vultr](https://www.vultr.com/) 或 [Hetzner](https://www.hetzner.com/) 购买一台 Ubuntu 22.04 服务器（约 $5/月起）。通过 SSH 连接。
-- **本地虚拟机**：使用 [OrbStack](https://orbstack.dev/) 或 UTM 运行 Ubuntu 虚拟机。
+```bash
+brew install orbstack
+```
+
+安装后打开 OrbStack，然后在终端输入 `orb` 进入 Linux shell。后面所有步骤都在这个 shell 里执行 — 跟原生 Linux 一模一样。
+
+> **其他方案：** [Colima](https://github.com/abiosoft/colima)（`brew install colima && colima start`）或云服务器（[DigitalOcean](https://www.digitalocean.com/)、[Vultr](https://www.vultr.com/)、[Hetzner](https://www.hetzner.com/)，约 $5/月起）。
 
 </details>
 
@@ -281,7 +286,7 @@ K3s（单机） → EKS / GKE / AKS（云端）
 Telegram 每个 Bot token 只允许一个 `getUpdates` 消费者。Discord 没有这个限制。通过 @BotFather 创建额外的 Telegram Bot 是免费的且没有数量限制。
 
 **支持 macOS / Windows 吗？**
-K3s 仅支持 Linux。Windows 用 WSL2（见第 0 步），macOS 用云服务器或 Linux 虚拟机。
+K3s 仅支持 Linux。Windows 用 WSL2（见第 0 步），macOS 用 OrbStack — `brew install orbstack` 然后 `orb` 进入 Linux shell。
 
 **可以在树莓派上运行吗？**
 K3s 支持 ARM64。树莓派 4（4GB+）可以轻松运行 1–2 个智能体。

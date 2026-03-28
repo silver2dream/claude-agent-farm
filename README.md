@@ -50,12 +50,17 @@ All remaining steps should be run **inside the Ubuntu terminal**.
 </details>
 
 <details>
-<summary><b>I'm on macOS</b> → Use a cloud VPS</summary>
+<summary><b>I'm on macOS</b> → Install OrbStack</summary>
 
-K3s doesn't run natively on macOS. Your options:
+K3s doesn't run natively on macOS, but [OrbStack](https://orbstack.dev/) gives you a seamless Linux environment with zero config:
 
-- **Cloud VPS** (recommended): Get an Ubuntu 22.04 server from [DigitalOcean](https://www.digitalocean.com/), [Vultr](https://www.vultr.com/), or [Hetzner](https://www.hetzner.com/) (from ~$5/mo). SSH into it.
-- **Linux VM**: Use [OrbStack](https://orbstack.dev/) or UTM to run an Ubuntu VM locally.
+```bash
+brew install orbstack
+```
+
+After install, open OrbStack, then type `orb` in your terminal to enter a Linux shell. All remaining steps run inside this shell — it works exactly like native Linux.
+
+> **Alternatives:** [Colima](https://github.com/abiosoft/colima) (`brew install colima && colima start`) or a cloud VPS ([DigitalOcean](https://www.digitalocean.com/), [Vultr](https://www.vultr.com/), [Hetzner](https://www.hetzner.com/) from ~$5/mo).
 
 </details>
 
@@ -281,7 +286,7 @@ Yes. They coexist in the same K3s cluster. Run both setup scripts.
 Telegram only allows one `getUpdates` consumer per bot token. Discord doesn't have this limitation. Creating extra Telegram bots via @BotFather is free and has no limit.
 
 **Does this work on macOS / Windows?**
-K3s is Linux-only. On Windows, use WSL2 (see Step 0). On macOS, use a cloud VPS or Linux VM.
+K3s is Linux-only. On Windows, use WSL2 (see Step 0). On macOS, use OrbStack — just `brew install orbstack` then `orb` to get a Linux shell.
 
 **Can I run this on a Raspberry Pi?**
 K3s supports ARM64. A Raspberry Pi 4 (4GB+) can comfortably host 1–2 agents.
