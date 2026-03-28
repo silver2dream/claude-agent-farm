@@ -4,7 +4,7 @@
 
 **在你自己的机器上运行常驻 Claude Code AI 智能体，通过 Discord 或 Telegram 与它们对话。基于 K3s 构建。**
 
-一个 Bot，多个智能��。每个智能体拥有独立角色、独立��天频道、独立运行环境。
+一个 Bot，多个智能体。每个智能体拥有独立角色、独立聊天频道、独立运行环境。
 文件和凭证留在你的机器上，AI 推理走 Anthropic 服务器，对话走 Discord 或 Telegram — 没有第三方代码接触你的数据。
 
 <!-- TODO: 添加演示 GIF -->
@@ -14,10 +14,10 @@
 
 ## 这是什么？
 
-Claude Agent Farm 使用 [K3s](https://k3s.io) 将 [Claude Code Channels](https://code.claude.com/docs/en/channels)（Anthropic ���方聊天插件）部署到你机器上的轻量级 Kubernetes Pod 中。每个智能体：
+Claude Agent Farm 使用 [K3s](https://k3s.io) 将 [Claude Code Channels](https://code.claude.com/docs/en/channels)（Anthropic 官方聊天插件）部署到你机器上的轻量级 Kubernetes Pod 中。每个智能体：
 
 - 运行在**隔离的 Pod** 中（独立文件系统、网络、资源）
-- 连接到**专属的 Discord 频��或 Telegram 聊天**（一个频道 = 一个智能体）
+- 连接到**专属的 Discord 频道或 Telegram 聊天**（一个频道 = 一个智能体）
 - 崩溃后**自动重启**（K8s 存活探针）
 - 数据留在**你的机器上**（文件和凭证在本地；仅 Anthropic API 和聊天平台 API 是外部连接）
 - 空闲时**零 Anthropic 配额消耗**
@@ -159,7 +159,7 @@ bash setup-telegram.sh
 
 ---
 
-## 添加智��体
+## 添加智能体
 
 ```bash
 # Discord — 所有智能体共享一个 Bot
@@ -180,10 +180,10 @@ make -f Makefile.telegram new-agent NAME=ci-fix BOT_TOKEN=<token>
 
 ```
 Discord #频道     ◄──► Claude Code Pod（在 K3s 中）
-Telegram 聊天     ◄──► Claude Code Pod（�� K3s 中）
+Telegram 聊天     ◄──► Claude Code Pod（在 K3s 中）
                          │
                          ├── 通过官方插件读取聊天平台事件
-                         ├── ��有完整文件系统 + git 访��权限
+                         ├── 拥有完整文件系统 + git 访问权限
                          ├── 通过同一频道/聊天回复
                          └── 在资源受限的隔离 Pod 中运行
 ```
@@ -204,10 +204,10 @@ claude-agent-farm/
 ├── config.example[.telegram].env    # 配置模板
 ├── docker/
 │   ├── Dockerfile[.telegram]        # 各平台容器镜像
-│   └── entrypoint[-telegram].sh     # 凭证恢�� + 启动
+│   └── entrypoint[-telegram].sh     # 凭证恢复 + 启动
 ├── manifests/
 │   ├── namespace.yaml               # claude-agents 命名空间
-│   ├��─ base/                        # 网络策略
+│   ├── base/                        # 网络策略
 │   └── agents/                      # 生成的智能体 YAML
 ├── scripts/                         # 智能体 YAML 生成器
 ├── examples/                        # 各平台智能体模板
@@ -226,7 +226,7 @@ claude-agent-farm/
 | 智能体数量 | CPU | 内存 | 建议机器 |
 |---|---|---|---|
 | 1–2 个 | 2 核 | 4 GB | $20–30/月 VPS 或旧笔记本 |
-| 3���5 个 | 4 核 | 8 GB | $40–60/月 VPS |
+| 3–5 个 | 4 核 | 8 GB | $40–60/月 VPS |
 | 6–10 个 | 8 核 | 16 GB | $80–100/月 独立服务器 |
 
 K3s 控制面额外占用约 500MB 内存。
@@ -239,7 +239,7 @@ K3s 控制面额外占用约 500MB 内存。
 
 | 方案 | 价格 | 约每 5 小时提示数 | 适合 |
 |---|---|---|---|
-| Pro | $20/�� | ~45 | 1–2 个轻量智能体 |
+| Pro | $20/月 | ~45 | 1–2 个轻量智能体 |
 | Max 5x | $100/月 | ~200 | 2–3 个中等负载智能体 |
 | Max 20x | $200/月 | ~800 | 3+ 个并行智能体 |
 
@@ -252,9 +252,9 @@ K3s 控制面额外占用约 500MB 内存。
 即使在单台机器上，K3s 也能提供真正的隔离：
 
 - **Pod 隔离** — 每个智能体拥有独立的文件系统命名空间；一个智能体无法访问另一个的数据
-- **K8s Secrets** — Bot token 和 Claude 凭证加密存储，而非明文文���
+- **K8s Secrets** — Bot token 和 Claude 凭证加密存储，而非明文文件
 - **NetworkPolicy** — 每个智能体的出站流量仅限聊天平台 API + Anthropic API + DNS
-- **无第���方代码** — 仅使用 Anthropic 官方插件 + K8s 原生组件
+- **无第三方代码** — 仅使用 Anthropic 官方插件 + K8s 原生组件
 
 如需高级加固（RBAC、KMS 静态加密、审计日志），请参阅企业版文档。
 
