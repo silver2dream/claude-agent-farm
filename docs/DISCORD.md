@@ -56,7 +56,9 @@ make setup
 
 ## First-time Pairing
 
-Each agent needs to be paired with Discord once. After that, the config persists across restarts.
+> **Using `bash setup.sh`?** Pairing is handled automatically — the entrypoint pre-configures access control with your User ID and Channel ID. You can skip this section.
+
+If you set up manually without the setup script, each agent needs to be paired once:
 
 ```bash
 # Exec into the running agent pod
@@ -70,8 +72,6 @@ make shell AGENT=my-first-agent
 # Exit the pod
 exit
 ```
-
-Now message the agent in its Discord channel. It will respond.
 
 ---
 

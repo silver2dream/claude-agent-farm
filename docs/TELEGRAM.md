@@ -58,7 +58,9 @@ make -f Makefile.telegram setup
 
 ## First-time Pairing
 
-Each agent needs to be paired with Telegram once. After that, the config persists across restarts.
+> **Using `bash setup-telegram.sh`?** Pairing is handled automatically — the entrypoint pre-configures access control with your User ID and Chat ID. You can skip this section.
+
+If you set up manually without the setup script, each agent needs to be paired once:
 
 ```bash
 # Exec into the running agent pod
@@ -72,8 +74,6 @@ make -f Makefile.telegram shell AGENT=my-first-agent
 # Exit the pod
 exit
 ```
-
-Now send a message to the bot on Telegram. It will respond.
 
 ---
 

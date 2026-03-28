@@ -56,7 +56,9 @@ make setup
 
 ## 首次配对
 
-每个智能体需要与 Discord 配对一次。配对后，配置在重启后依然保留。
+> **使用 `bash setup.sh` 安装的？** 配对已自动完成 — entrypoint 会用你的 User ID 和 Channel ID 预配置访问控制。可以跳过本节。
+
+如果你是手动安装（未使用安装脚本），每个智能体需要配对一次：
 
 ```bash
 # 进入运行中的智能体 Pod
@@ -70,8 +72,6 @@ make shell AGENT=my-first-agent
 # 退出 Pod
 exit
 ```
-
-现在在 Discord 频道中给智能体发消息，它会回复。
 
 ---
 
