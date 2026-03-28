@@ -1,9 +1,9 @@
 # 🪐 Claude Agent Farm
 
-**Run always-on Claude Code AI agents on your own machine. Talk to them from Discord. Powered by K3s.**
+**Run always-on Claude Code AI agents on your own machine. Talk to them from Discord or Telegram. Powered by K3s.**
 
-One bot. Multiple agents. Each with its own role, its own Discord channel, its own isolated environment.  
-Your files and credentials stay on your machine. AI inference goes through Anthropic, conversations through Discord — nothing else touches your data. Zero third-party code in the critical path.
+One bot. Multiple agents. Each with its own role, its own chat channel, its own isolated environment.
+Your files and credentials stay on your machine. AI inference goes through Anthropic, conversations through Discord or Telegram — nothing else touches your data. Zero third-party code in the critical path.
 
 <!-- TODO: Add demo GIF here -->
 <!-- ![demo](docs/demo.gif) -->
@@ -12,15 +12,15 @@ Your files and credentials stay on your machine. AI inference goes through Anthr
 
 ## What is this?
 
-Claude Agent Farm deploys [Claude Code Channels](https://code.claude.com/docs/en/channels) (Anthropic's official Discord plugin) inside lightweight Kubernetes pods on your machine using [K3s](https://k3s.io). Each agent:
+Claude Agent Farm deploys [Claude Code Channels](https://code.claude.com/docs/en/channels) (Anthropic's official Discord/Telegram plugin) inside lightweight Kubernetes pods on your machine using [K3s](https://k3s.io). Each agent:
 
 - Runs in an **isolated Pod** (separate filesystem, network, resources)
-- Connects to a **dedicated Discord channel** (one channel = one agent)
+- Connects to a **dedicated Discord channel or Telegram chat** (one channel = one agent)
 - **Auto-restarts** if it crashes (K8s liveness probes)
 - Stays on **your machine** (files and credentials local; only Anthropic API and Discord API are external)
 - Consumes **zero Anthropic quota** when idle
 
-Think of it as a team of AI coworkers, each with a specialty, all reachable from your phone via Discord.
+Think of it as a team of AI coworkers, each with a specialty, all reachable from your phone via Discord or Telegram.
 
 ---
 
@@ -33,9 +33,9 @@ Think of it as a team of AI coworkers, each with a specialty, all reachable from
 | Linux machine (VPS, home server, or WSL2) | Ubuntu 22.04+, 2 CPU, 4GB RAM minimum |
 | Claude Pro or Max subscription | [claude.ai/pricing](https://claude.ai/pricing) |
 | Claude Code CLI (authenticated) | `npm install -g @anthropic-ai/claude-code` then `claude login` |
-| Discord account | [discord.com](https://discord.com) |
+| Discord or Telegram account | [discord.com](https://discord.com) / [telegram.org](https://telegram.org) |
 
-### One-command setup
+### One-command setup (Discord)
 
 ```bash
 git clone https://github.com/silver2dream/claude-agent-farm.git
@@ -43,20 +43,28 @@ cd claude-agent-farm
 bash setup.sh
 ```
 
-The setup script walks you through everything interactively:
+### One-command setup (Telegram)
+
+```bash
+git clone https://github.com/silver2dream/claude-agent-farm.git
+cd claude-agent-farm
+bash setup-telegram.sh
+```
+
+Both setup scripts walk you through everything interactively:
 
 1. **Installs K3s** (if not already installed)
-2. **Asks for your Discord bot token** (with instructions to create one)
-3. **Asks for your Discord server ID**
+2. **Asks for your bot token** (Discord or Telegram)
+3. **Asks for your server/chat ID**
 4. **Names your first agent**
 5. **Finds your Claude credentials** (from `~/.claude/`)
 6. **Builds the container image**
 7. **Deploys everything to K3s**
 
-The only thing left after the script finishes is [first-time pairing](#first-time-pairing) — one command to link the agent to Discord.
+The only thing left after the script finishes is [first-time pairing](#first-time-pairing) — one command to link the agent to your chat platform.
 
 <details>
-<summary><b>Manual setup (if you prefer step-by-step)</b></summary>
+<summary><b>Manual setup — Discord (step-by-step)</b></summary>
 
 #### 1. Install K3s
 
@@ -83,6 +91,34 @@ make setup
 
 </details>
 
+<details>
+<summary><b>Manual setup — Telegram (step-by-step)</b></summary>
+
+#### 1. Install K3s
+
+```bash
+curl -sfL https://get.k3s.io | sh -
+mkdir -p ~/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo chown $(id -u):$(id -g) ~/.kube/config
+export KUBECONFIG=~/.kube/config
+```
+
+#### 2. Configure
+
+```bash
+cp config.example.telegram.env config.telegram.env
+# Edit config.telegram.env with your Telegram bot token, user ID, and agent name
+```
+
+#### 3. Deploy
+
+```bash
+make -f Makefile.telegram setup
+```
+
+</details>
+
 ---
 
 ## Create a Discord Bot
@@ -99,9 +135,25 @@ You only need **one bot** for all your agents.
 
 ---
 
+## Create a Telegram Bot
+
+You only need **one bot** for all your agents.
+
+1. Open Telegram and search for **@BotFather**
+2. Send `/newbot` and follow the prompts to name your bot
+3. Copy the bot token that BotFather gives you
+4. To get your **User ID**: send a message to **@userinfobot** or **@RawDataBot**
+5. To get a **Chat ID** for group chats: add the bot to a group, send a message, then visit `https://api.telegram.org/bot<TOKEN>/getUpdates`
+
+> ⚠️ **Keep the bot token secret.** It will be stored as a K8s Secret — never commit it to Git.
+
+---
+
 ## First-time Pairing
 
-Each agent needs to be paired with Discord once. After that, the config persists across restarts.
+Each agent needs to be paired with its chat platform once. After that, the config persists across restarts.
+
+**Discord:**
 
 ```bash
 # Exec into the running agent pod
@@ -116,7 +168,22 @@ make shell AGENT=my-first-agent
 exit
 ```
 
-Now message the agent in its Discord channel. It will respond. 🎉
+**Telegram:**
+
+```bash
+# Exec into the running agent pod
+make -f Makefile.telegram shell AGENT=my-first-agent
+
+# In the pod: send a message to your bot on Telegram, get a pairing code, then:
+/telegram:access pair <pairing-code>
+/telegram:access policy allowlist
+/telegram:access chat add <chat-id>
+
+# Exit the pod
+exit
+```
+
+Now message the agent in its channel/chat. It will respond.
 
 ---
 
@@ -136,16 +203,21 @@ make apply
 Or use the helper:
 
 ```bash
-make new-agent NAME=ci-fix CHANNEL=ci-fix
+# Discord
+make new-agent NAME=ci-fix CHANNEL_ID=123456
 make apply
+
+# Telegram
+make -f Makefile.telegram new-agent NAME=ci-fix CHAT_ID=123456
+make -f Makefile.telegram apply
 ```
 
 Each agent gets:
 - Its own Pod (isolated filesystem and resources)
-- Its own PVC (persistent config across restarts)  
-- Its own Discord channel
+- Its own PVC (persistent config across restarts)
+- Its own Discord channel or Telegram chat
 
-They all share one Discord bot token and one Claude subscription. No bot proliferation.
+They all share one bot token and one Claude subscription. No bot proliferation.
 
 ---
 
@@ -154,32 +226,39 @@ They all share one Discord bot token and one Claude subscription. No bot prolife
 ```
 claude-agent-farm/
 ├── README.md
-├── setup.sh                    # One-command interactive setup
-├── Makefile                    # All commands: deploy, shell, logs, new-agent
-├── config.example.env          # Template — copy to config.env
+├── setup.sh                         # One-command setup (Discord)
+├── setup-telegram.sh                # One-command setup (Telegram)
+├── Makefile                         # Discord commands: deploy, shell, logs, new-agent
+├── Makefile.telegram                # Telegram commands: deploy, shell, logs, new-agent
+├── config.example.env               # Discord template — copy to config.env
+├── config.example.telegram.env      # Telegram template — copy to config.telegram.env
 ├── docker/
-│   ├── Dockerfile              # Claude Code + Bun + Discord plugin
-│   └── entrypoint.sh           # Credential restore + Claude startup
+│   ├── Dockerfile                   # Claude Code + Discord plugin
+│   ├── Dockerfile.telegram          # Claude Code + Telegram plugin
+│   ├── entrypoint.sh               # Discord credential restore + startup
+│   └── entrypoint-telegram.sh      # Telegram credential restore + startup
 ├── manifests/
-│   ├── namespace.yaml          # claude-agents namespace
+│   ├── namespace.yaml               # claude-agents namespace
 │   ├── base/
-│   │   ├── secret.yaml         # Discord token + Claude credentials
-│   │   └── network-policy.yaml # Egress restricted to Discord + Anthropic
+│   │   ├── network-policy.yaml      # Discord egress policy
+│   │   └── network-policy-telegram.yaml # Telegram egress policy
 │   └── agents/
-│       └── example-agent.yaml  # Example agent Deployment + PVC
+│       └── (generated agent YAMLs)
 ├── scripts/
-│   ├── setup.sh                # First-time setup wizard
-│   ├── build-image.sh          # Build + import image to K3s
-│   └── create-agent.sh         # Generate agent YAML from template
+│   ├── create-agent.sh              # Generate Discord agent YAML
+│   └── create-agent-telegram.sh     # Generate Telegram agent YAML
 ├── examples/
-│   └── agent-template.yaml     # Copy this to create new agents
+│   ├── agent-template.yaml          # Discord agent template
+│   └── agent-template-telegram.yaml # Telegram agent template
 └── docs/
-    └── UPGRADE.md              # Path from K3s → EKS/GKE/AKS
+    └── UPGRADE.md                   # Path from K3s → EKS/GKE/AKS
 ```
 
 ---
 
 ## Commands
+
+### Discord
 
 | Command | What it does |
 |---|---|
@@ -191,24 +270,40 @@ claude-agent-farm/
 | `make logs AGENT=name` | Tail logs of a specific agent |
 | `make shell AGENT=name` | Exec into an agent pod |
 | `make restart AGENT=name` | Restart an agent (clears context) |
-| `make new-agent NAME=x CHANNEL=y` | Generate a new agent YAML |
+| `make new-agent NAME=x CHANNEL_ID=y` | Generate a new agent YAML |
 | `make destroy` | Remove everything |
+
+### Telegram
+
+| Command | What it does |
+|---|---|
+| `bash setup-telegram.sh` | Interactive one-command setup (installs everything) |
+| `make -f Makefile.telegram setup` | Non-interactive setup (requires config.telegram.env) |
+| `make -f Makefile.telegram deploy` | Apply all manifests to K3s |
+| `make -f Makefile.telegram apply` | Re-apply after adding/changing agents |
+| `make -f Makefile.telegram status` | Show all agent pods and their status |
+| `make -f Makefile.telegram logs AGENT=name` | Tail logs of a specific agent |
+| `make -f Makefile.telegram shell AGENT=name` | Exec into an agent pod |
+| `make -f Makefile.telegram restart AGENT=name` | Restart an agent (clears context) |
+| `make -f Makefile.telegram new-agent NAME=x CHAT_ID=y` | Generate a new agent YAML |
+| `make -f Makefile.telegram destroy` | Remove everything |
 
 ---
 
 ## How It Works
 
 ```
-Discord #channel ◄──► Claude Code Pod (in K3s)
+Discord #channel  ◄──► Claude Code Pod (in K3s)
+Telegram chat     ◄──► Claude Code Pod (in K3s)
                          │
-                         ├── Reads events from Discord via official plugin
+                         ├── Reads events from Discord/Telegram via official plugin
                          ├── Processes with full filesystem + git access
-                         ├── Replies back through the same channel
+                         ├── Replies back through the same channel/chat
                          └── Runs in isolated Pod with resource limits
 ```
 
-- **You message a Discord channel** → the official Anthropic Discord plugin polls it → Claude Code processes your request → reply appears in the channel
-- **External webhooks** (GitHub, CI, monitoring) can POST directly to Discord channel webhook URLs → agents react automatically
+- **You message a channel/chat** → the official Anthropic plugin polls it → Claude Code processes your request → reply appears in the channel/chat
+- **External webhooks** (GitHub, CI, monitoring) can POST directly to channel webhook URLs → agents react automatically
 - **Idle agents cost nothing** — only active token processing counts toward your Anthropic quota
 - **Crashed agents auto-restart** — K8s liveness probes detect failures and restart the Pod
 
@@ -248,7 +343,7 @@ Even on a single machine, K3s gives you real isolation:
 
 - **Pod isolation** — each agent has its own filesystem namespace; one agent cannot access another's data
 - **K8s Secrets** — Discord token and Claude credentials are stored encrypted, not as plain files
-- **NetworkPolicy** — each agent's egress is restricted to Discord API + Anthropic API + DNS only
+- **NetworkPolicy** — each agent's egress is restricted to Discord/Telegram API + Anthropic API + DNS only
 - **No third-party code** — only Anthropic's official plugin + K8s-native components
 
 For advanced hardening (RBAC, KMS encryption at rest, audit logging), see the Enterprise documentation.
@@ -269,8 +364,8 @@ Same Deployments, same PVCs, same NetworkPolicies, same Secrets. Add ArgoCD for 
 
 ## FAQ
 
-**Can I use Telegram instead of Discord?**  
-Yes. Replace `plugin:discord@claude-plugins-official` with `plugin:telegram@claude-plugins-official` in the agent config. Everything else stays the same.
+**Can I use both Discord and Telegram?**
+Yes. You can run Discord agents and Telegram agents in the same K3s cluster. They share the same namespace and Claude credentials. Use `make` for Discord agents and `make -f Makefile.telegram` for Telegram agents.
 
 **Does this work on macOS / Windows?**  
 K3s is Linux-only. On macOS/Windows, use the [Quick Start with tmux](docs/QUICKSTART-TMUX.md) approach instead, or run K3s inside a Linux VM.
