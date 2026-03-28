@@ -52,6 +52,21 @@ cp config.example.telegram.env config.telegram.env
 make -f Makefile.telegram setup
 ```
 
+### 4. First-time Pairing
+
+```bash
+# Exec into the running agent pod
+make -f Makefile.telegram shell AGENT=my-first-agent
+
+# In the pod: send a message to your bot on Telegram, get a pairing code, then:
+/telegram:access pair <pairing-code>
+/telegram:access policy allowlist
+/telegram:access chat add <chat-id>
+
+# Exit the pod
+exit
+```
+
 </details>
 
 ---

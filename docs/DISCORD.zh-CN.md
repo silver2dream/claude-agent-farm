@@ -50,6 +50,21 @@ cp config.example.env config.env
 make setup
 ```
 
+### 4. 首次配对
+
+```bash
+# 进入运行中的智能体 Pod
+make shell AGENT=my-first-agent
+
+# 在 Pod 中：在 Discord 上私信你的 Bot，获取配对码，然后：
+/discord:access pair <配对码>
+/discord:access policy allowlist
+/discord:access channel add <频道ID>
+
+# 退出 Pod
+exit
+```
+
 </details>
 
 ---

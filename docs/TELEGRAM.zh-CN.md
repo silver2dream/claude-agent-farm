@@ -52,6 +52,21 @@ cp config.example.telegram.env config.telegram.env
 make -f Makefile.telegram setup
 ```
 
+### 4. 首次配对
+
+```bash
+# 进入运行中的智能体 Pod
+make -f Makefile.telegram shell AGENT=my-first-agent
+
+# 在 Pod 中：在 Telegram 上给你的 Bot 发消息，获取配对码，然后：
+/telegram:access pair <配对码>
+/telegram:access policy allowlist
+/telegram:access chat add <聊天ID>
+
+# 退出 Pod
+exit
+```
+
 </details>
 
 ---

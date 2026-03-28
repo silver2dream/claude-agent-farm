@@ -50,6 +50,21 @@ cp config.example.env config.env
 make setup
 ```
 
+### 4. First-time Pairing
+
+```bash
+# Exec into the running agent pod
+make shell AGENT=my-first-agent
+
+# In the pod: DM your bot on Discord, get a pairing code, then:
+/discord:access pair <pairing-code>
+/discord:access policy allowlist
+/discord:access channel add <channel-id>
+
+# Exit the pod
+exit
+```
+
 </details>
 
 ---
