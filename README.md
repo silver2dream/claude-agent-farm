@@ -45,7 +45,13 @@ wsl --install -d Ubuntu
 
 Restart your computer when prompted. After reboot, open **Ubuntu** from the Start menu. It will ask you to create a username and password — remember these.
 
-All remaining steps should be run **inside the Ubuntu terminal**.
+From now on, every time you want to use Claude Agent Farm, open a terminal and type:
+
+```powershell
+wsl
+```
+
+This drops you into the Linux shell. All remaining steps run here.
 
 </details>
 
