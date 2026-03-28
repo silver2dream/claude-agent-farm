@@ -196,8 +196,8 @@ step "5" "Deploying to K3s..."
 # Namespace
 kubectl apply -f manifests/namespace.yaml
 
-# Secrets
-kubectl create secret generic telegram-bot-token \
+# Per-agent bot secret (Telegram: one bot per agent)
+kubectl create secret generic "telegram-${AGENT_NAME}" \
   --from-literal=TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" \
   --from-literal=TELEGRAM_USER_ID="$TELEGRAM_USER_ID" \
   -n claude-agents --dry-run=client -o yaml | kubectl apply -f -
@@ -277,7 +277,8 @@ echo -e "  Status:  ${BOLD}$POD_STATUS${NC}"
 echo ""
 echo -e "  ${GREEN}Ready! Just send a message to your bot on Telegram — it will respond.${NC}"
 echo ""
-echo -e "  ${BOLD}Add another agent:${NC}"
+echo -e "  ${BOLD}Add another agent (each needs its own bot from @BotFather):${NC}"
+echo -e "    ${CYAN}make -f Makefile.telegram add-bot NAME=cto BOT_TOKEN=<token> USER_ID=<uid>${NC}"
 echo -e "    ${CYAN}make -f Makefile.telegram new-agent NAME=cto CHAT_ID=123456 PROMPT=\"You are a CTO...\"${NC}"
 echo -e "    ${CYAN}make -f Makefile.telegram apply${NC}"
 echo ""

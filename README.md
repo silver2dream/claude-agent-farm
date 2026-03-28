@@ -203,11 +203,12 @@ make apply
 Or use the helper:
 
 ```bash
-# Discord
+# Discord — all agents share one bot
 make new-agent NAME=ci-fix CHANNEL_ID=123456
 make apply
 
-# Telegram
+# Telegram — each agent needs its own bot (Telegram API limitation)
+make -f Makefile.telegram add-bot NAME=ci-fix BOT_TOKEN=<token-from-botfather> USER_ID=<your-uid>
 make -f Makefile.telegram new-agent NAME=ci-fix CHAT_ID=123456
 make -f Makefile.telegram apply
 ```
@@ -217,7 +218,9 @@ Each agent gets:
 - Its own PVC (persistent config across restarts)
 - Its own Discord channel or Telegram chat
 
-They all share one bot token and one Claude subscription. No bot proliferation.
+> **Discord vs Telegram:** Discord agents share one bot token (the bot joins multiple channels). Telegram agents each need their own bot — Telegram only allows one `getUpdates` consumer per token. Creating extra bots via @BotFather is free and instant.
+
+All agents share one Claude subscription.
 
 ---
 
