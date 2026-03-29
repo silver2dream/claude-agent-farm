@@ -37,17 +37,21 @@ spec:
             - name: DISCORD_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: discord-bot-token
+                  name: discord-bot-__AGENT_NAME__
                   key: DISCORD_BOT_TOKEN
             - name: DISCORD_USER_ID
               valueFrom:
                 secretKeyRef:
-                  name: discord-bot-token
+                  name: discord-shared
                   key: DISCORD_USER_ID
             - name: DISCORD_CHANNEL_ID
               value: "__CHANNEL_ID__"
             - name: AGENT_SYSTEM_PROMPT
               value: "__SYSTEM_PROMPT__"
+            - name: REQUIRE_MENTION
+              value: "__REQUIRE_MENTION__"
+            - name: ORCHESTRATOR_BOT_ID
+              value: "1485208546579710003"
           resources:
             requests:
               cpu: 250m
@@ -61,6 +65,8 @@ spec:
             - name: claude-credentials
               mountPath: /secrets/claude-config
               readOnly: true
+            - name: shared-projects
+              mountPath: /home/agent/workspace/projects
           livenessProbe:
             exec:
               command: ["pgrep", "-f", "claude"]
@@ -74,3 +80,7 @@ spec:
           secret:
             secretName: claude-config
             optional: true
+        - name: shared-projects
+          hostPath:
+            path: /data/game-studio-projects
+            type: DirectoryOrCreate

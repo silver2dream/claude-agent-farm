@@ -1,4 +1,4 @@
-.PHONY: setup deploy apply status logs shell restart new-agent destroy build
+.PHONY: setup deploy apply status logs shell restart new-agent deploy-team destroy build
 
 include config.env
 export
@@ -104,6 +104,12 @@ endif
 # ──────────────────────────────────────────────
 # Create a new agent
 # ──────────────────────────────────────────────
+
+deploy-team:
+ifndef CHANNEL_ID
+	$(error Usage: make deploy-team CHANNEL_ID=discord-channel-id CONFIG=path/to/agents.json)
+endif
+	@bash scripts/deploy-team.sh $(or $(CONFIG),examples/game-studio-agents.json) $(CHANNEL_ID) $(IMAGE)
 
 new-agent:
 ifndef NAME

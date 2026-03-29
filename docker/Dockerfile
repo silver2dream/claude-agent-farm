@@ -23,9 +23,11 @@ WORKDIR /home/agent
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/home/agent/.bun/bin:$PATH"
 
-# Install Discord channel plugin and backup to survive PVC mount over ~/.claude
+# Install Discord channel plugin, patch for multi-bot support, and backup
 RUN claude plugin marketplace add anthropics/claude-plugins-official \
     && claude plugin install discord@claude-plugins-official \
+    && PLUGIN_DIR=$(find /home/agent/.claude/plugins/cache -path '*/discord/*/server.ts' -printf '%h' -quit) \
+    && sed -i 's/if (msg\.author\.bot) return/if (msg.author.id === client.user?.id) return/' "$PLUGIN_DIR/server.ts" \
     && mkdir -p /home/agent/.claude-plugins-backup \
     && cp -r /home/agent/.claude/plugins /home/agent/.claude-plugins-backup/plugins \
     && cp /home/agent/.claude/settings.json /home/agent/.claude-plugins-backup/settings.json

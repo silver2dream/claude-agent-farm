@@ -37,13 +37,19 @@ if [ -n "$DISCORD_BOT_TOKEN" ]; then
         dmPolicy: 'allowlist',
         allowFrom: [],
         groups: {},
-        pending: {}
+        pending: {},
+        ackReaction: '\ud83d\udc40'
       };
       const uid = process.env.DISCORD_USER_ID;
       if (uid) access.allowFrom.push(uid);
       const chId = process.env.DISCORD_CHANNEL_ID;
+      const reqMention = process.env.REQUIRE_MENTION === 'true';
       if (chId) {
-        access.groups[chId] = { requireMention: false, allowFrom: uid ? [uid] : [] };
+        const groupAllow = [];
+        if (uid) groupAllow.push(uid);
+        const orchId = process.env.ORCHESTRATOR_BOT_ID;
+        if (orchId) groupAllow.push(orchId);
+        access.groups[chId] = { requireMention: reqMention, allowFrom: groupAllow };
       }
       const f = process.env.HOME + '/.claude/channels/discord/access.json';
       fs.writeFileSync(f, JSON.stringify(access, null, 2));

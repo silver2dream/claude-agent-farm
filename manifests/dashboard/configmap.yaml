@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-config
+  namespace: claude-agents
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="zh-TW">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Game Studio Dashboard</title>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
+      <style>
+        :root {
+          --base-background-color: #0d1117;
+          --cover-background-color: #0d1117;
+        }
+        .sidebar { background-color: #161b22; }
+        .app-name { font-size: 1.2em; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      </style>
+    </head>
+    <body>
+      <div id="app"></div>
+      <script>
+        window.$docsify = {
+          name: '🪐 Game Studio',
+          loadSidebar: true,
+          subMaxLevel: 3,
+          search: 'auto',
+          auto2top: true,
+          relativePath: true,
+          alias: {
+            '/.*/_sidebar.md': '/_sidebar.md'
+          }
+        }
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+    </body>
+    </html>
+  nginx.conf: |
+    server {
+      listen 80;
+      server_name _;
+      root /data/projects;
+      index index.html;
+
+      # Serve index.html from configmap mount for root
+      location = / {
+        root /usr/share/nginx/html;
+        try_files /index.html =404;
+      }
+      location = /index.html {
+        root /usr/share/nginx/html;
+      }
+
+      # All other paths: try file from projects dir, fallback to index.html
+      location / {
+        try_files $uri $uri/ @fallback;
+        add_header Cache-Control "no-cache";
+      }
+      location @fallback {
+        root /usr/share/nginx/html;
+        rewrite ^ /index.html break;
+      }
+    }
