@@ -106,10 +106,13 @@ endif
 # ──────────────────────────────────────────────
 
 deploy-team:
-ifndef CHANNEL_ID
-	$(error Usage: make deploy-team CHANNEL_ID=discord-channel-id CONFIG=path/to/agents.json)
+ifndef PROJECT
+	$(error Usage: make deploy-team PROJECT=codename CHANNEL_ID=discord-channel-id [CONFIG=agents.json])
 endif
-	@bash scripts/deploy-team.sh $(or $(CONFIG),examples/game-studio-agents.json) $(CHANNEL_ID) $(IMAGE)
+ifndef CHANNEL_ID
+	$(error Usage: make deploy-team PROJECT=codename CHANNEL_ID=discord-channel-id [CONFIG=agents.json])
+endif
+	@bash scripts/deploy-team.sh $(PROJECT) $(CHANNEL_ID) $(or $(CONFIG),examples/game-studio-agents.json) $(IMAGE)
 
 new-agent:
 ifndef NAME

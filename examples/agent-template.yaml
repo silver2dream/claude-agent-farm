@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: __AGENT_NAME__-claude-data
+  name: __PROJECT__-__AGENT_NAME__-claude-data
   namespace: claude-agents
 spec:
   accessModes:
@@ -13,19 +13,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: __AGENT_NAME__
+  name: __PROJECT__-__AGENT_NAME__
   namespace: claude-agents
   labels:
     app.kubernetes.io/part-of: claude-agent-farm
+    project: __PROJECT__
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: __AGENT_NAME__
+      app: __PROJECT__-__AGENT_NAME__
   template:
     metadata:
       labels:
-        app: __AGENT_NAME__
+        app: __PROJECT__-__AGENT_NAME__
+        project: __PROJECT__
     spec:
       containers:
         - name: claude-code
@@ -51,7 +53,7 @@ spec:
             - name: REQUIRE_MENTION
               value: "__REQUIRE_MENTION__"
             - name: ORCHESTRATOR_BOT_ID
-              value: "1485208546579710003"
+              value: "__ORCHESTRATOR_BOT_ID__"
           resources:
             requests:
               cpu: 250m
@@ -65,8 +67,8 @@ spec:
             - name: claude-credentials
               mountPath: /secrets/claude-config
               readOnly: true
-            - name: shared-projects
-              mountPath: /home/agent/workspace/projects
+            - name: project-workspace
+              mountPath: /home/agent/workspace/projects/__PROJECT__
           livenessProbe:
             exec:
               command: ["pgrep", "-f", "claude"]
@@ -75,12 +77,12 @@ spec:
       volumes:
         - name: claude-data
           persistentVolumeClaim:
-            claimName: __AGENT_NAME__-claude-data
+            claimName: __PROJECT__-__AGENT_NAME__-claude-data
         - name: claude-credentials
           secret:
             secretName: claude-config
             optional: true
-        - name: shared-projects
+        - name: project-workspace
           hostPath:
-            path: /data/game-studio-projects
+            path: /data/game-studio-projects/__PROJECT__
             type: DirectoryOrCreate
