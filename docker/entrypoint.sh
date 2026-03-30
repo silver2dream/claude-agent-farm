@@ -98,4 +98,8 @@ if [ -n "$AGENT_SYSTEM_PROMPT" ]; then
   CLAUDE_ARGS+=(--append-system-prompt "$AGENT_SYSTEM_PROMPT")
 fi
 
+if [ -n "$AGENT_MODEL" ]; then
+  CLAUDE_ARGS+=(--model "$AGENT_MODEL")
+fi
+
 exec claude "${CLAUDE_ARGS[@]}"

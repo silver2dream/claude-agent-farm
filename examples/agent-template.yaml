@@ -54,6 +54,8 @@ spec:
               value: "__REQUIRE_MENTION__"
             - name: ORCHESTRATOR_BOT_ID
               value: "__ORCHESTRATOR_BOT_ID__"
+            - name: AGENT_MODEL
+              value: "__MODEL__"
           resources:
             requests:
               cpu: 250m

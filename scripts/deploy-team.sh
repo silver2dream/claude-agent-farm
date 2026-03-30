@@ -80,7 +80,8 @@ for (const agent of config.agents) {
     .replace(/__IMAGE__/g, image)
     .replace(/__SYSTEM_PROMPT__/g, escapedPrompt)
     .replace(/__REQUIRE_MENTION__/g, agent.requireMention ? 'true' : 'false')
-    .replace(/__ORCHESTRATOR_BOT_ID__/g, orchestratorBotId);
+    .replace(/__ORCHESTRATOR_BOT_ID__/g, orchestratorBotId)
+    .replace(/__MODEL__/g, agent.model || '');
 
   fs.writeFileSync(outFile, yaml);
   console.log('OK|' + fullName + '|' + agent.role);
